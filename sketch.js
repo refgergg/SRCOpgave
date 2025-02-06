@@ -7,20 +7,19 @@ class Point {
   }
 }
 
-let P0 = new Point(50, 350);
-let P1 = new Point(100, 50);
-let P2 = new Point(300, 50);
-let P3 = new Point(350, 350);
-let A = new Point();
-let B = new Point();
-let C = new Point();
-let D = new Point();
-let E = new Point();
-let P = new Point();
+class Curve {
+  constructor(points = [], startPoint = new Point(), endPoint = new Point()) {
+    this.points = points;
+    this.startPoint = startPoint;
+    this.endPoint = endPoint;
+  }
+}
 
 let t=0
 let pd=20
-let bezierPoints = [P0,P1,P2,P3];
+
+let bezierPoints = [];
+let curves = [];
 
 function setup() {
   createCanvas(400, 400);
@@ -29,29 +28,51 @@ function setup() {
 
 function draw() {
   background(220);
-  movePoint()
+  //movePoint();
+
+  //Draw curve we are currently creating
   drawDecasteljau(bezierPoints);
- 
 
-  /*
-  drawPoints()
-  supportLines()
-  */
+  //Draw curves we have previously created
+  for(let i=0;i<curves.length;i++) {
+    drawDecasteljau(curves[i].points);
+    //console.log(curves[i]);
+  }
 
+  //Supporting stuff
+  drawPoints();
+  supportLines();
+
+  //UI stuff
+  let button = createButton('Finish Curve');
+  button.position(500, 300);
+  button.mousePressed(finishCurve);
   text("Click & drag the points to change the bézier curve",50,375)
 }
 
+function finishCurve(){
+  curves.push(new Curve(bezierPoints, bezierPoints[0], bezierPoints[bezierPoints.length-1]));
+  bezierPoints = [];
+  console.log(curves);
+}
+
+function createPoints(x, y){
+  bezierPoints.push(new Point(x, y));
+}
+
 function supportLines(){
-  line(P0.x,P0.y,P1.x,P1.y);
-  line(P1.x,P1.y,P2.x,P2.y);
-  line(P2.x,P2.y,P3.x,P3.y);
+  for(let i=0;i<bezierPoints.length;i++) {
+    if(bezierPoints[i+1] == null) {
+      return;
+    }
+    line(bezierPoints[i].x,bezierPoints[i].y,bezierPoints[i+1].x,bezierPoints[i+1].y);
+  }
 }
 
 function drawPoints(){
-  circle(P0.x,P0.y,pd);
-  circle(P1.x,P1.y,pd);
-  circle(P2.x,P2.y,pd);
-  circle(P3.x,P3.y,pd);
+  for(let i=0;i<bezierPoints.length;i++) {
+    circle(bezierPoints[i].x, bezierPoints[i].y, pd);
+  }
 }
 
 function movePoint(){
@@ -64,12 +85,41 @@ function movePoint(){
 }
 
 function mousePressed(){
+  /*
   for(let i=0; i<bezierPoints.length;i++){
     if(dist(bezierPoints[i].x,bezierPoints[i].y,mouseX,mouseY)<pd/2){
       bezierPoints[i].relativX=bezierPoints[i].x-mouseX
       bezierPoints[i].relativY=bezierPoints[i].y-mouseY
     }
   } 
+  */
+  if(mouseX < width && mouseY < height) {
+    
+    closestPointAndDist = [0,0];
+    //check if our placement of point is close to another point. If so, snap to it
+    //this code is disgusting. Unfortunately i dont care
+    for(let i=0;i<curves.length;i++){
+      for(let j=0;j<curves[i].points.length;j++){
+        //Find current curve point dist
+        pointDist = dist(mouseX, mouseY, curves[i].points[j].x, curves[i].points[j].y);
+        if(closestPointAndDist[1] == 0) {
+          closestPointAndDist = [curves[i].points[j], pointDist];
+          continue;
+        } else {
+          //If current curve point dist is closer than closest so far, replace
+          if(closestPointAndDist[1] > pointDist) {
+            closestPointAndDist = [curves[i].points[j], pointDist];
+          }
+        }
+      }
+    }
+
+    if(closestPointAndDist[1] < 25 && closestPointAndDist[1] > 0) {
+      createPoints(closestPointAndDist[0].x, closestPointAndDist[0].y);
+    } else {
+      createPoints(mouseX, mouseY)
+    }
+  }
 }
 
 function mouseReleased(){
@@ -83,6 +133,7 @@ function mouseReleased(){
 /////////// version til et virkårligt antal punkter
 let points = [ [0, 128], [128, 0], [256, 0], [384, 128] ]
 function drawDecasteljau(points){
+  if(points <= 1){return;}
   for(let i = 0; i < 1; i+=0.001){
     let ps = crlPtReduceDeCasteljau (points, i)
     circle(ps[ps.length-1][0][0],ps[ps.length-1][0][1],10)
@@ -92,7 +143,7 @@ function drawDecasteljau(points){
 //https://en.wikipedia.org/wiki/De_Casteljau%27s_algorithm 
 function crlPtReduceDeCasteljau(points, t) {
   var pointsRefactored = [];
-  for(i=0;i<points.length;i++){
+  for(let i=0;i<points.length;i++){
     pointsRefactored.push([points[i].x, points[i].y]);
   }
 
