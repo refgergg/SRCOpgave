@@ -20,49 +20,31 @@ let P = new Point();
 
 let t=0
 let pd=20
-let bezierPoints = [P0,P1,P2,P3]
-
-
+let bezierPoints = [P0,P1,P2,P3];
 
 function setup() {
   createCanvas(400, 400);
+  //console.log(crlPtReduceDeCasteljau(points, 0));
 }
 
 function draw() {
   background(220);
   movePoint()
-  for(let t=0; t<1; t+=0.001){
-    calcBezier(t);
-    drawBezier();
-  }
+  drawDecasteljau(bezierPoints);
+ 
+
+  /*
   drawPoints()
   supportLines()
-  text("Click & drag the points to change the bézier curve",50,375)
-}
+  */
 
-function calcBezier(t){
-  A.x=lerp(P0.x,P1.x,t)
-  A.y=lerp(P0.y,P1.y,t)
-  B.x=lerp(P1.x,P2.x,t)
-  B.y=lerp(P1.y,P2.y,t)
-  C.x=lerp(P2.x,P3.x,t)
-  C.y=lerp(P2.y,P3.y,t)
-  D.x=lerp(A.x,B.x,t)
-  D.y=lerp(A.y,B.y,t)
-  E.x=lerp(B.x,C.x,t)
-  E.y=lerp(B.y,C.y,t)
-  P.x=lerp(D.x,E.x,t)
-  P.y=lerp(D.y,E.y,t)
+  text("Click & drag the points to change the bézier curve",50,375)
 }
 
 function supportLines(){
   line(P0.x,P0.y,P1.x,P1.y);
   line(P1.x,P1.y,P2.x,P2.y);
   line(P2.x,P2.y,P3.x,P3.y);
-}
-
-function drawBezier(){
-  circle(P.x,P.y,15);
 }
 
 function drawPoints(){
@@ -97,7 +79,7 @@ function mouseReleased(){
   } 
 }
 
-/*
+
 /////////// version til et virkårligt antal punkter
 let points = [ [0, 128], [128, 0], [256, 0], [384, 128] ]
 function drawDecasteljau(points){
@@ -109,24 +91,29 @@ function drawDecasteljau(points){
 
 //https://en.wikipedia.org/wiki/De_Casteljau%27s_algorithm 
 function crlPtReduceDeCasteljau(points, t) {
-    let retArr = [ points.slice () ];
-	while (points.length > 1) {
-        let midpoints = [];
-		for (let i = 0; i+1 < points.length; ++i) {
-			let ax = points[i][0];
-			let ay = points[i][1];
-			let bx = points[i+1][0];
-			let by = points[i+1][1];
+  var pointsRefactored = [];
+  for(i=0;i<points.length;i++){
+    pointsRefactored.push([points[i].x, points[i].y]);
+  }
+
+  let retArr = [ pointsRefactored.slice () ];
+  //console.log(retArr);
+	while (pointsRefactored.length > 1) {
+    let midpoints = [];
+		for (let i = 0; i+1 < pointsRefactored.length; ++i) {
+			let ax = pointsRefactored[i][0];
+			let ay = pointsRefactored[i][1];
+			let bx = pointsRefactored[i+1][0];
+			let by = pointsRefactored[i+1][1];
             // a * (1-t) + b * t = a + (b - a) * t
 			midpoints.push([
 				ax + (bx - ax) * t,
 				ay + (by - ay) * t,
 			]);
 		}
-        retArr.push (midpoints)
-		points = midpoints;
+    retArr.push (midpoints)
+    pointsRefactored = midpoints;
 	}
 	return retArr;
 }
 ////////////////
-*/
